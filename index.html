@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Nogora POS - Terminal</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Full-Screen Login Overlay -->
+    <div id="login-screen">
+        <div class="login-card">
+            <img src="logo.png" alt="Nogora Logo" style="height: 50px; object-fit: contain; margin-bottom: 15px;">
+            <h2>Terminal Login</h2>
+            <p>Enter your staff ID and PIN to start shift</p>
+            
+            <div class="login-form-group">
+                <label>Staff ID / Username</label>
+                <input type="text" id="login-username" placeholder="e.g. cashier01">
+            </div>
+
+            <div class="login-form-group">
+                <label>PIN / Password</label>
+                <input type="password" id="login-pin" maxlength="6" placeholder="••••">
+            </div>
+
+            <button id="login-submit-btn" class="login-btn">Log In to Terminal</button>
+            <div id="login-error">Invalid credentials. Please try again.</div>
+        </div>
+    </div>
+
+    <!-- Main App Container (Hidden until logged in) -->
+    <div id="app-workspace" style="display: none;">
+        <!-- Header with Logo, Theme Switcher & Status -->
+        <header>
+            <div class="logo-area">
+                <img src="logo.png" alt="Nogora Junction Logo" style="height: 45px; object-fit: contain;">
+            </div>
+            <div class="header-controls" style="display: flex; align-items: center;">
+                <button id="theme-toggle-btn" class="theme-btn">🌙 Dark Theme</button>
+                <div style="font-size: 14px; color: #9ca3af; font-weight: 500; margin-left: 15px;">
+                    Terminal #1 | User: <span id="logged-in-cashier" style="color: #10b981; font-weight: bold;">None</span>
+                </div>
+                <!-- Navigation Switcher Buttons -->
+                <button id="nav-pos-btn" class="admin-panel-btn" style="display: none; background: #3b82f6;">🛒 POS Terminal</button>
+                <button id="nav-admin-btn" class="admin-panel-btn" style="display: none; background: #d97706;">⚙️ Admin Tools</button>
+                <button id="nav-reports-btn" class="admin-panel-btn" style="display: none; background: #8b5cf6;">📈 Sales Reports</button>
+                <button id="logout-btn" class="logout-btn">Log Out</button>
+            </div>
+        </header>
+
+        <!-- VIEW 1: Main POS Terminal Workspace -->
+        <div id="pos-view" class="app-view active-view">
+            <div class="pos-container">
+                <!-- LEFT: Menu & Categories -->
+                <div class="menu-section">
+                    <div class="categories" id="category-filters">
+                        <button class="category-btn active" data-category="all">All Items</button>
+                        <button class="category-btn" data-category="noodles">Noodles</button>
+                        <button class="category-btn" data-category="pasta">Pasta</button>
+                        <button class="category-btn" data-category="salads">Salads</button>
+                    </div>
+
+                    <div class="menu-grid" id="menu-grid"></div>
+                </div>
+
+                <!-- RIGHT: Current Order Cart -->
+                <div class="cart-section">
+                    <div class="cart-header">Current Order</div>
+                    
+                    <div class="cart-items-list" id="cart-items-list">
+                        <div style="color: var(--text-muted); text-align: center; margin-top: 40px;">Cart is empty. Tap items to add.</div>
+                    </div>
+
+                    <div class="cart-footer">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="subtotal-display">GH₵ 0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Tax (5%)</span>
+                            <span id="tax-display">GH₵ 0.00</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span id="total-display">GH₵ 0.00</span>
+                        </div>
+
+                        <div class="checkout-actions">
+                            <button id="void-order-btn" class="btn-danger">Void (Manager)</button>
+                            <button id="charge-order-btn" class="btn-success">Charge Order</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: Full Page Admin Tools View -->
+        <div id="admin-view" class="app-view">
+            <div class="admin-page-container">
+                <div class="reports-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h2>Manager Administration</h2>
+                        <p style="font-size: 13px; color: var(--text-muted);">Manage user access credentials and roles.</p>
+                    </div>
+                    <button id="admin-back-to-pos" class="category-btn active" style="background: #3b82f6; color: white; width: auto; padding: 8px 16px;">← Back to POS</button>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <h4 style="font-size: 14px; margin-bottom: 10px; color: var(--text-main);">Create New Staff / Role</h4>
+                    <div class="login-form-group" style="margin-bottom: 12px;">
+                        <label style="font-size: 12px; color: var(--text-main);">Username / ID</label>
+                        <input type="text" id="new-username" placeholder="e.g. cashier02">
+                    </div>
+                    <div class="login-form-group" style="margin-bottom: 12px;">
+                        <label style="font-size: 12px; color: var(--text-main);">PIN / Password</label>
+                        <input type="password" id="new-pin" placeholder="Enter PIN">
+                    </div>
+                    <div class="login-form-group" style="margin-bottom: 12px;">
+                        <label style="font-size: 12px; color: var(--text-main);">Assign Role</label>
+                        <select id="new-role" class="form-select" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-main);">
+                            <option value="CASHIER">Cashier</option>
+                            <option value="MANAGER">Manager</option>
+                        </select>
+                    </div>
+                    <button id="create-user-btn" class="category-btn active" style="background:#10b981; color:white; width:100%; margin-top:5px;">Create User Account</button>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+                    <h4 style="font-size: 14px; margin-bottom: 10px; color: var(--text-main);">Change Staff Password / PIN</h4>
+                    <div class="login-form-group" style="margin-bottom: 12px;">
+                        <label style="font-size: 12px; color: var(--text-main);">Target Username</label>
+                        <input type="text" id="target-username" placeholder="e.g. cashier01">
+                    </div>
+                    <div class="login-form-group" style="margin-bottom: 12px;">
+                        <label style="font-size: 12px; color: var(--text-main);">New PIN</label>
+                        <input type="password" id="target-new-pin" placeholder="New PIN">
+                    </div>
+                    <button id="change-pin-btn" class="category-btn active" style="background:#3b82f6; color:white; width:100%; margin-top:5px;">Update Password</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: Full Page Sales Reports & Analytics Dashboard -->
+        <div id="reports-view" class="app-view">
+            <div class="reports-page-container">
+                <div class="reports-header-row">
+                    <div>
+                        <h2>Sales & Performance Analytics</h2>
+                        <p style="font-size: 13px; color: var(--text-muted);">Track shift performance, cashier totals, and sales history.</p>
+                    </div>
+                    <button id="back-to-pos-btn" class="category-btn active" style="background: #3b82f6; color: white; width: auto; padding: 8px 16px;">← Back to POS Terminal</button>
+                </div>
+                
+                <div class="stat-card-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Revenue</div>
+                        <div class="stat-val" id="report-total-revenue">GH₵ 0.00</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Orders Completed</div>
+                        <div class="stat-val" id="report-total-orders">0</div>
+                    </div>
+                </div>
+
+                <h4 style="font-size: 14px; margin-bottom: 8px; color: var(--text-main);">Sales by Cashier</h4>
+                <div class="reports-table-container" style="max-height: 200px; margin-bottom: 20px;">
+                    <table class="reports-table">
+                        <thead>
+                            <tr>
+                                <th>Cashier</th>
+                                <th>Orders</th>
+                                <th>Total Sales</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cashier-performance-tbody">
+                            <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No transactions recorded yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4 style="font-size: 14px; margin-bottom: 8px; color: var(--text-main);">Recent Transactions Log</h4>
+                <div class="reports-table-container" style="max-height: 250px;">
+                    <table class="reports-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Time / Date</th>
+                                <th>Cashier</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-log-tbody">
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No transactions recorded yet.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Secure Manager PIN Modal Overlay for Voids -->
+    <div id="pin-modal" class="modal">
+        <div class="modal-content">
+            <h3>Manager Authorization</h3>
+            <p>Enter 4-digit Manager PIN to Void:</p>
+            <input type="password" id="pin-input" maxlength="4" placeholder="••••">
+            <div class="modal-actions">
+                <button id="pin-cancel" class="category-btn" style="background:var(--border-color); color:var(--text-main);">Cancel</button>
+                <button id="pin-submit" class="category-btn active" style="background:#007bff; color:white;">Authorize</button>
+            </div>
+            <div id="pin-error"></div>
+        </div>
+    </div>
+
+    <!-- Payment Method Modal (Cash vs E-Cash) -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <h3>Select Payment Method</h3>
+            <p id="payment-total-label" style="font-weight: bold; color: #10b981; margin-bottom: 10px;"></p>
+            <div class="payment-options">
+                <button class="payment-btn btn-cash" id="pay-cash-btn">💵 Cash Payment</button>
+                <button class="payment-btn btn-ecash" id="pay-ecash-btn">💳 E-Cash / Digital</button>
+            </div>
+            <div style="margin-top: 15px; text-align: right;">
+                <button id="payment-cancel" class="category-btn" style="background:var(--border-color); color:var(--text-main); width: 100%;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Preview Modal -->
+    <div id="receipt-modal" class="modal">
+        <div class="modal-content" style="width: 360px;">
+            <h3>Receipt Preview</h3>
+            <div class="receipt-box" id="receipt-content-area"></div>
+            <div class="modal-actions" style="gap: 10px;">
+                <button id="receipt-close-btn" class="category-btn" style="background:var(--border-color); color:var(--text-main); flex: 1;">Discard</button>
+                <button id="print-receipt-btn" class="category-btn active" style="background:#10b981; color:white; flex: 1;">🖨️ Print & Complete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POS Logic -->
+    <script>
+        const PRODUCTS = [
+            { id: 'indomie_chicken', name: 'Indomie with chicken', price: 30, category: 'noodles' },
+            { id: 'indomie_egg', name: 'Indomie with egg', price: 30, category: 'noodles' },
+            { id: 'indomie_mixed', name: 'Indomie mixed egg', price: 50, category: 'noodles' },
+            { id: 'spaghetti_chicken', name: 'Spaghetti with chicken', price: 30, category: 'pasta' },
+            { id: 'spaghetti_egg', name: 'Spaghetti with egg', price: 30, category: 'pasta' },
+            { id: 'spaghetti_mixed', name: 'Spaghetti mixed egg', price: 50, category: 'pasta' },
+            { id: 'salad_small', name: 'Salad (small)', price: 40, category: 'salads' },
+            { id: 'salad_large', name: 'Salad (large)', price: 50, category: 'salads' }
+        ];
+
+        let usersDB = {
+            'cashier': { pin: '1234', role: 'CASHIER' },
+            'manager': { pin: '9999', role: 'MANAGER' },
+            'admin': { pin: '0000', role: 'MANAGER' }
+        };
+
+        let transactionsDB = [];
+        let currentOrderData = null;
+        let cart = [];
+        let currentCategory = 'all';
+        let currentTotalValue = 0;
+        let selectedPaymentType = '';
+        let loggedInUser = '';
+        let loggedInRole = '';
+
+        const loginScreen = document.getElementById('login-screen');
+        const appWorkspace = document.getElementById('app-workspace');
+        const loginUsernameInput = document.getElementById('login-username');
+        const loginPinInput = document.getElementById('login-pin');
+        const loginSubmitBtn = document.getElementById('login-submit-btn');
+        const loginError = document.getElementById('login-error');
+        const loggedInCashierDisplay = document.getElementById('logged-in-cashier');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        const posView = document.getElementById('pos-view');
+        const adminView = document.getElementById('admin-view');
+        const reportsView = document.getElementById('reports-view');
+        
+        const navPosBtn = document.getElementById('nav-pos-btn');
+        const navAdminBtn = document.getElementById('nav-admin-btn');
+        const navReportsBtn = document.getElementById('nav-reports-btn');
+        
+        const adminBackToPos = document.getElementById('admin-back-to-pos');
+        const backToPosBtn = document.getElementById('back-to-pos-btn');
+
+        loginSubmitBtn.addEventListener('click', handleLogin);
+        loginPinInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+
+        function handleLogin() {
+            const username = loginUsernameInput.value.trim().toLowerCase();
+            const pin = loginPinInput.value.trim();
+
+            if (usersDB[username] && usersDB[username].pin === pin) {
+                loggedInUser = username.toUpperCase();
+                loggedInRole = usersDB[username].role;
+                loggedInCashierDisplay.textContent = `${loggedInUser} (${loggedInRole})`;
+                
+                if (loggedInRole === 'MANAGER') {
+                    navAdminBtn.style.display = 'inline-block';
+                    navReportsBtn.style.display = 'inline-block';
+                } else {
+                    navAdminBtn.style.display = 'none';
+                    navReportsBtn.style.display = 'none';
+                }
+
+                loginScreen.style.display = 'none';
+                appWorkspace.style.display = 'block';
+                loginError.style.display = 'none';
+                loginPinInput.value = '';
+                loginUsernameInput.value = '';
+                
+                switchView('pos');
+                renderMenu('all');
+            } else {
+                loginError.style.display = 'block';
+                loginPinInput.value = '';
+            }
+        }
+
+        logoutBtn.addEventListener('click', () => {
+            document.body.classList.remove('dark-theme');
+            themeToggleBtn.textContent = '🌙 Dark Theme';
+            appWorkspace.style.display = 'none';
+            loginScreen.style.display = 'flex';
+            cart = [];
+            renderCart();
+        });
+
+        function switchView(target) {
+            posView.classList.remove('active-view');
+            adminView.classList.remove('active-view');
+            reportsView.classList.remove('active-view');
+            
+            navPosBtn.style.display = 'none';
+            if (loggedInRole === 'MANAGER') {
+                navAdminBtn.style.display = 'inline-block';
+                navReportsBtn.style.display = 'inline-block';
+            }
+
+            if (target === 'pos') {
+                posView.classList.add('active-view');
+            } else if (target === 'admin') {
+                adminView.classList.add('active-view');
+                navAdminBtn.style.display = 'none';
+                navPosBtn.style.display = 'inline-block';
+            } else if (target === 'reports') {
+                reportsView.classList.add('active-view');
+                navReportsBtn.style.display = 'none';
+                navPosBtn.style.display = 'inline-block';
+                updateReportsDashboard();
+            }
+        }
+
+        navPosBtn.addEventListener('click', () => switchView('pos'));
+        navAdminBtn.addEventListener('click', () => switchView('admin'));
+        navReportsBtn.addEventListener('click', () => switchView('reports'));
+        adminBackToPos.addEventListener('click', () => switchView('pos'));
+        backToPosBtn.addEventListener('click', () => switchView('pos'));
+
+        document.getElementById('create-user-btn').addEventListener('click', () => {
+            const newUsername = document.getElementById('new-username').value.trim().toLowerCase();
+            const newPin = document.getElementById('new-pin').value.trim();
+            const newRole = document.getElementById('new-role').value;
+
+            if (!newUsername || !newPin) { alert("Please fill in both username and PIN."); return; }
+            if (usersDB[newUsername]) { alert("User already exists!"); return; }
+
+            usersDB[newUsername] = { pin: newPin, role: newRole };
+            alert(`User account '${newUsername.toUpperCase()}' created successfully as ${newRole}!`);
+            document.getElementById('new-username').value = '';
+            document.getElementById('new-pin').value = '';
+        });
+
+        document.getElementById('change-pin-btn').addEventListener('click', () => {
+            const targetUser = document.getElementById('target-username').value.trim().toLowerCase();
+            const targetNewPin = document.getElementById('target-new-pin').value.trim();
+
+            if (!targetUser || !targetNewPin) { alert("Please fill in target username and new PIN."); return; }
+            if (!usersDB[targetUser]) { alert("User not found in system."); return; }
+
+            usersDB[targetUser].pin = targetNewPin;
+            alert(`Password/PIN updated successfully for '${targetUser.toUpperCase()}'!`);
+            document.getElementById('target-username').value = '';
+            document.getElementById('target-new-pin').value = '';
+        });
+
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            themeToggleBtn.textContent = document.body.classList.contains('dark-theme') ? '☀️ Light Theme' : '🌙 Dark Theme';
+        });
+
+        function updateReportsDashboard() {
+            const totalRevenueEl = document.getElementById('report-total-revenue');
+            const totalOrdersEl = document.getElementById('report-total-orders');
+            const cashierTbody = document.getElementById('cashier-performance-tbody');
+            const txTbody = document.getElementById('transactions-log-tbody');
+
+            if (transactionsDB.length === 0) {
+                totalRevenueEl.textContent = 'GH₵ 0.00';
+                totalOrdersEl.textContent = '0';
+                cashierTbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No transactions recorded yet.</td></tr>`;
+                txTbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No transactions recorded yet.</td></tr>`;
+                return;
+            }
+
+            let overallRevenue = 0;
+            let cashierStats = {};
+
+            transactionsDB.forEach(tx => {
+                overallRevenue += tx.total;
+                if (!cashierStats[tx.cashier]) {
+                    cashierStats[tx.cashier] = { orders: 0, revenue: 0 };
+                }
+                cashierStats[tx.cashier].orders += 1;
+                cashierStats[tx.cashier].revenue += tx.total;
+            });
+
+            totalRevenueEl.textContent = `GH₵ ${overallRevenue.toFixed(2)}`;
+            totalOrdersEl.textContent = transactionsDB.length;
+
+            cashierTbody.innerHTML = '';
+            Object.keys(cashierStats).forEach(cashier => {
+                const stat = cashierStats[cashier];
+                cashierTbody.innerHTML += `
+                    <tr>
+                        <td><b>${cashier}</b></td>
+                        <td>${stat.orders}</td>
+                        <td style="color: #10b981; font-weight: bold;">GH₵ ${stat.revenue.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            txTbody.innerHTML = '';
+            [...transactionsDB].reverse().forEach(tx => {
+                txTbody.innerHTML += `
+                    <tr>
+                        <td><b>#${tx.orderNumber}</b></td>
+                        <td style="font-size: 11px;">${tx.timestamp}</td>
+                        <td>${tx.cashier}</td>
+                        <td><span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: ${tx.paymentType === 'CASH' ? '#d1fae5; color: #065f46;' : '#dbeafe; color: #1e40af;'}">${tx.paymentType}</span></td>
+                        <td style="font-weight: bold;">GH₵ ${tx.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        const menuGrid = document.getElementById('menu-grid');
+        function renderMenu(category = 'all') {
+            menuGrid.innerHTML = '';
+            const filteredProducts = category === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.category === category);
+            filteredProducts.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'menu-item-card';
+                card.innerHTML = `
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-price">GH₵ ${item.price.toFixed(2)}</div>
+                `;
+                card.addEventListener('click', () => addToCart(item));
+                menuGrid.appendChild(card);
+            });
+        }
+
+        document.querySelectorAll('#category-filters .category-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('#category-filters .category-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentCategory = e.target.getAttribute('data-category');
+                renderMenu(currentCategory);
+            });
+        });
+
+        function addToCart(item) {
+            const existing = cart.find(cartItem => cartItem.id === item.id);
+            if (existing) { existing.qty += 1; } else { cart.push({ ...item, qty: 1 }); }
+            renderCart();
+        }
+
+        function renderCart() {
+            const cartList = document.getElementById('cart-items-list');
+            const subtotalEl = document.getElementById('subtotal-display');
+            const taxEl = document.getElementById('tax-display');
+            const totalEl = document.getElementById('total-display');
+
+            if (cart.length === 0) {
+                cartList.innerHTML = '<div style="color: var(--text-muted); text-align: center; margin-top: 40px;">Cart is empty. Tap items to add.</div>';
+                subtotalEl.textContent = 'GH₵ 0.00';
+                taxEl.textContent = 'GH₵ 0.00';
+                totalEl.textContent = 'GH₵ 0.00';
+                currentTotalValue = 0;
+                return;
+            }
+
+            cartList.innerHTML = '';
+            let subtotal = 0;
+            cart.forEach((item, index) => {
+                subtotal += item.price * item.qty;
+                const row = document.createElement('div');
+                row.className = 'cart-item';
+                row.innerHTML = `
+                    <div class="cart-item-details">
+                        <span class="cart-item-name">${item.name}</span>
+                        <span class="cart-item-price">GH₵ ${(item.price * item.qty).toFixed(2)}</span>
+                    </div>
+                    <div class="cart-item-actions">
+                        <button class="qty-btn" onclick="updateQty(${index}, -1)">-</button>
+                        <span style="font-size: 13px; font-weight: bold; width: 18px; text-align: center; color: var(--text-main);">${item.qty}</span>
+                        <button class="qty-btn" onclick="updateQty(${index}, 1)">+</button>
+                    </div>
+                `;
+                cartList.appendChild(row);
+            });
+
+            const tax = subtotal * 0.05; 
+            currentTotalValue = subtotal + tax;
+            subtotalEl.textContent = `GH₵ ${subtotal.toFixed(2)}`;
+            taxEl.textContent = `GH₵ ${tax.toFixed(2)}`;
+            totalEl.textContent = `GH₵ ${currentTotalValue.toFixed(2)}`;
+        }
+
+        window.updateQty = function(index, change) {
+            cart[index].qty += change;
+            if (cart[index].qty <= 0) { cart.splice(index, 1); }
+            renderCart();
+        };
+
+        const modal = document.getElementById('pin-modal');
+        const voidBtn = document.getElementById('void-order-btn');
+        const submitBtn = document.getElementById('pin-submit');
+        const cancelBtn = document.getElementById('pin-cancel');
+        const pinInput = document.getElementById('pin-input');
+        const errorMsg = document.getElementById('pin-error');
+
+        voidBtn.addEventListener('click', () => {
+            if (cart.length === 0) { alert("Cart is already empty."); return; }
+            modal.style.display = 'flex';
+            pinInput.value = '';
+            errorMsg.style.display = 'none';
+            pinInput.focus();
+        });
+        cancelBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+
+        submitBtn.addEventListener('click', () => {
+            const pin = pinInput.value.trim();
+            let authorizedManager = Object.values(usersDB).find(u => u.pin === pin && u.role === 'MANAGER');
+            if (authorizedManager) {
+                modal.style.display = 'none';
+                cart = [];
+                renderCart();
+                alert(`Order voided successfully by manager authorization.`);
+            } else {
+                errorMsg.textContent = "Invalid Manager PIN.";
+                errorMsg.style.display = 'block';
+                pinInput.value = '';
+            }
+        });
+
+        const paymentModal = document.getElementById('payment-modal');
+        const receiptModal = document.getElementById('receipt-modal');
+        const chargeBtn = document.getElementById('charge-order-btn');
+        const paymentCancel = document.getElementById('payment-cancel');
+        const payCashBtn = document.getElementById('pay-cash-btn');
+        const payECashBtn = document.getElementById('pay-ecash-btn');
+        const paymentTotalLabel = document.getElementById('payment-total-label');
+        const receiptContentArea = document.getElementById('receipt-content-area');
+        const receiptCloseBtn = document.getElementById('receipt-close-btn');
+        const printReceiptBtn = document.getElementById('print-receipt-btn');
+
+        chargeBtn.addEventListener('click', () => {
+            if (cart.length === 0) { alert("Cannot charge an empty cart."); return; }
+            paymentTotalLabel.textContent = `Amount Due: GH₵ ${currentTotalValue.toFixed(2)}`;
+            paymentModal.style.display = 'flex';
+        });
+
+        paymentCancel.addEventListener('click', () => { paymentModal.style.display = 'none'; });
+        payCashBtn.addEventListener('click', () => { selectedPaymentType = 'CASH'; prepareTransaction(); });
+        payECashBtn.addEventListener('click', () => { selectedPaymentType = 'E-CASH / DIGITAL'; prepareTransaction(); });
+
+        function prepareTransaction() {
+            paymentModal.style.display = 'none';
+            const now = new Date();
+            const orderNumber = `${now.getFullYear().toString().slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+            const timestamp = now.toLocaleString();
+            const subtotal = currentTotalValue / 1.05;
+            const tax = subtotal * 0.05;
+
+            currentOrderData = { orderNumber, timestamp, cashier: loggedInUser, paymentType: selectedPaymentType, items: [...cart], subtotal, tax, total: currentTotalValue };
+
+            let itemsHtml = '';
+            cart.forEach(item => {
+                itemsHtml += `<div class="receipt-row"><span>${item.qty}x ${item.name}</span><span>GH₵ ${(item.price * item.qty).toFixed(2)}</span></div>`;
+            });
+
+            // Added watermark image inside receipt box container
+            // Updated receiptContentArea.innerHTML without the watermark
+receiptContentArea.innerHTML = `
+    <div class="receipt-header-text">NOGORA JUNCTION<br><span style="font-size:11px; font-weight:normal;">Bar & Fast Food</span></div>
+    <div style="text-align: center; font-size: 10px; margin-bottom: 6px; color: #4b5563;">Contact: 0544709396 | MOMO Pay: 225123</div>
+    <div style="font-size: 11px; text-align: center; margin-bottom: 4px;">Order: <b>#NG-${orderNumber}</b></div>
+    <div style="font-size: 11px; text-align: center; margin-bottom: 8px;">Date: ${timestamp}</div>
+    <div class="receipt-divider"></div>
+    ${itemsHtml}
+    <div class="receipt-divider"></div>
+    <div class="receipt-row"><span>Subtotal:</span><span>GH₵ ${subtotal.toFixed(2)}</span></div>
+    <div class="receipt-row"><span>Tax (5%):</span><span>GH₵ ${(subtotal * 0.05).toFixed(2)}</span></div>
+    <div class="receipt-row" style="font-weight: bold; margin-top: 5px;"><span>TOTAL:</span><span>GH₵ ${currentTotalValue.toFixed(2)}</span></div>
+    <div class="receipt-divider"></div>
+    <div style="text-align: center; font-size: 11px; margin-top: 5px;">Payment Type: <b>${selectedPaymentType}</b></div>
+    <div style="text-align: center; font-size: 11px; margin-top: 4px;">Cashier: <b>${loggedInUser}</b></div>
+    <div style="text-align: center; font-size: 10px; margin-top: 8px; color: #4b5563;">Thank you for dining with us!</div>
+`;
+            receiptModal.style.display = 'flex';
+        }
+
+        receiptCloseBtn.addEventListener('click', () => { receiptModal.style.display = 'none'; });
+        printReceiptBtn.addEventListener('click', () => {
+            if (currentOrderData) { transactionsDB.push(currentOrderData); }
+            alert(`Receipt printed successfully via thermal printer! Transaction logged for ${selectedPaymentType}.`);
+            receiptModal.style.display = 'none';
+            cart = [];
+            currentOrderData = null;
+            renderCart();
+        });
+    </script>
+</body>
+</html>

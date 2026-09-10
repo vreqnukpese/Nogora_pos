@@ -1,0 +1,17 @@
+{
+  "name": "nogora-pos",
+  "version": "1.0.0",
+  "description": "Offline-first restaurant POS system",
+  "main": "main.js",
+  "scripts": {
+    "start": "./node_modules/electron/electron ."
+  },
+  "dependencies": {
+    "escpos": "^3.0.0-alpha.6",
+    "escpos-network": "^3.0.0-alpha.4",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "electron": "^28.2.0"
+  }
+}

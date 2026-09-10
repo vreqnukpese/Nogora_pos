@@ -1,0 +1,510 @@
+/* ==========================================
+   1. Theme Variables & Global Setup
+   ========================================== */
+:root {
+    --bg-main: #f3f4f6;
+    --surface-color: #ffffff;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --border-color: #e5e7eb;
+    --header-bg: #111827;
+    --card-bg: #ffffff;
+    --card-hover: #f9fafb;
+    --modal-bg: rgba(0, 0, 0, 0.5);
+}
+
+body.dark-theme {
+    --bg-main: #0f172a;
+    --surface-color: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --header-bg: #090d16;
+    --card-bg: #1e293b;
+    --card-hover: #273548;
+    --modal-bg: rgba(0, 0, 0, 0.75);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ==========================================
+   2. Header & Navigation Layout
+   ========================================== */
+header {
+    background-color: var(--header-bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.theme-btn, .admin-panel-btn, .logout-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s;
+}
+
+.theme-btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.logout-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.theme-btn:hover, .admin-panel-btn:hover, .logout-btn:hover {
+    opacity: 0.9;
+}
+
+/* ==========================================
+   3. Workspace & POS View Layout
+   ========================================== */
+.app-view {
+    display: none;
+    height: calc(100vh - 65px);
+    width: 100%;
+}
+
+.app-view.active-view {
+    display: flex;
+}
+
+.pos-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    padding: 16px;
+    gap: 16px;
+}
+
+/* Menu Section (Left) */
+.menu-section {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-color);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    overflow:hidden;
+}
+
+.categories {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.category-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--text-main);
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.category-btn.active {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.menu-item-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100px;
+    transition: transform 0.1s ease, background-color 0.2s;
+}
+
+.menu-item-card:hover {
+    background: var(--card-hover);
+    transform: translateY(-2px);
+}
+
+.item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.item-price {
+    font-size: 14px;
+    font-weight: bold;
+    color: #10b981;
+}
+
+/* Cart Section (Right) */
+.cart-section {
+    flex: 2;
+    background: var(--surface-color);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+}
+
+.cart-header {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+
+.cart-items-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 12px;
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cart-item-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.cart-item-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.cart-item-price {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.cart-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.qty-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--text-main);
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.cart-footer {
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: var(--text-muted);
+}
+
+.summary-row.total {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-main);
+    margin-top: 6px;
+}
+
+.checkout-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.btn-success, .btn-danger {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+}
+
+.btn-success { background: #10b981; }
+.btn-danger { background: #ef4444; }
+
+/* ==========================================
+   4. Modals & Receipt Watermark Fix
+   ========================================== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--modal-bg);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--surface-color);
+    padding: 24px;
+    border-radius: 12px;
+    width: 380px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    color: var(--text-main);
+}
+
+.modal-content h3 {
+    margin-bottom: 12px;
+    font-size: 18px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+/* Receipt Preview Box & High-Contrast Watermark */
+.receipt-box {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    padding: 16px;
+    border-radius: 6px;
+    border: 1px dashed #cbd5e1;
+    max-height: 320px;
+    overflow-y: auto;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.receipt-header-text {
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.receipt-divider {
+    border-top: 1px dashed #94a3b8;
+    margin: 8px 0;
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+/* ==========================================
+   5. Admin & Reports Pages Styling
+   ========================================== */
+.admin-page-container, .reports-page-container {
+    padding: 24px;
+    width: 100%;
+    overflow-y: auto;
+    background: var(--surface-color);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    margin: 16px;
+}
+
+.stat-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.stat-val {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-main);
+    margin-top: 4px;
+}
+
+.reports-table-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow-y: auto;
+}
+
+.reports-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    color: var(--text-main);
+}
+
+.reports-table th, .reports-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.reports-table th {
+    background: var(--card-hover);
+    font-weight: bold;
+}
+/* ==========================================
+   6. Login Screen Styles
+   ========================================== */
+#login-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: var(--bg-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.login-card {
+    background: var(--surface-color);
+    padding: 32px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 360px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.login-card h2 {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-main);
+    margin-bottom: 6px;
+}
+
+.login-card p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+.login-form-group {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 14px;
+}
+
+.login-form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.login-form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-size: 14px;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 11px;
+    border-radius: 6px;
+    background: #10b981;
+    color: white;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+    font-size: 14px;
+    transition: opacity 0.2s;
+}
+
+.login-btn:hover {
+    opacity: 0.9;
+}
+
+#login-error {
+    color: #ef4444;
+    font-size: 12px;
+    margin-top: 10px;
+    display: none;
+}
